@@ -1,4 +1,5 @@
 package controllers;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -25,13 +26,26 @@ public class IndexServlet extends HttpServlet {
             throws ServletException, IOException {
         EntityManager em = DBUtil.createEntityManager();
 
-        List<Task> tasks = em.createNamedQuery("getAllTask", Task.class).getResultList();
+        int page = 1;
+        try {
+            page = Integer.parseInt(request.getParameter("page"));
+        } catch (NumberFormatException e) {
+        }
 
+        List<Task> tasks = em.createNamedQuery("getAllTask", Task.class)
+                .setFirstResult(15 * (page - 1))
+                .setMaxResults(15)
+                .getResultList();
+
+        long Task_count = (long) em.createNamedQuery("getTaskCount", Long.class)
+                .getSingleResult();
         em.close();
 
         request.setAttribute("tasks", tasks);
+        request.setAttribute("tasks_count", Task_count);
+        request.setAttribute("page", page);
 
-        if(request.getSession().getAttribute("flush") != null) {
+        if (request.getSession().getAttribute("flush") != null) {
             request.setAttribute("flush", request.getSession().getAttribute("flush"));
             request.getSession().removeAttribute("flush");
         }
